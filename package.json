@@ -1,0 +1,12 @@
+{
+  "name": "grocery-store-wars",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "scrape:iga": "cd scrapers && python -m scrapers.iga",
+    "scrape:thriftway": "cd scrapers && python -m scrapers.thriftway",
+    "match": "cd scrapers && python -m scrapers.matcher"
+  }
+}
