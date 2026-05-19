@@ -1,0 +1,11 @@
+pyproject.toml
+grocery_store_wars_scrapers.egg-info/PKG-INFO
+grocery_store_wars_scrapers.egg-info/SOURCES.txt
+grocery_store_wars_scrapers.egg-info/dependency_links.txt
+grocery_store_wars_scrapers.egg-info/requires.txt
+grocery_store_wars_scrapers.egg-info/top_level.txt
+scrapers/__init__.py
+scrapers/db.py
+scrapers/iga.py
+scrapers/matcher.py
+scrapers/thriftway.py
