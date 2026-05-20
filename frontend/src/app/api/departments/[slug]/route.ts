@@ -114,11 +114,13 @@ export async function GET(
       JOIN departments d ON p.department_id = d.id
       WHERE p.store_id = 'iga-vashon'
         AND p.price IS NOT NULL AND pt_comp.price IS NOT NULL
+        AND pm.match_quality != 'size_mismatch'
         AND d.name IN (${placeholders})
       ORDER BY ABS(p.price - pt_comp.price) DESC
+      LIMIT 200
     `,
     args: deptNames,
   });
 
-  return NextResponse.json(result.rows);
+  return NextResponse.json(result.rows, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
 }

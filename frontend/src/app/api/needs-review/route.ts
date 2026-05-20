@@ -24,5 +24,5 @@ export async function GET() {
     `,
     args: [IGA_STORE],
   });
-  return NextResponse.json(result.rows);
+  return NextResponse.json(result.rows, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
 }

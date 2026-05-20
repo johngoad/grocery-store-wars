@@ -6,24 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
 
 interface ProductRow {
   name: string;
-  iga_price: number;
-  iga_display: string;
-  iga_size: string | null;
-  iga_size_oz: number | null;
-  tw_name: string;
-  tw_price: number;
-  tw_display: string;
-  tw_size: string | null;
-  tw_size_oz: number | null;
-  gap: number;
-  gap_pct: number;
-  size_diff: number | null;
-  confidence: number;
-  match_quality: string;
+  iga_price: number; iga_display: string; iga_size: string | null; iga_size_oz: number | null;
+  tw_name: string; tw_price: number; tw_display: string; tw_size: string | null; tw_size_oz: number | null;
+  gap: number; gap_pct: number; size_diff: number | null;
+  confidence: number; match_quality: string;
 }
 
 type SortKey = "name" | "iga_price" | "tw_price" | "gap" | "gap_pct" | "size_diff" | "confidence";
@@ -44,6 +34,8 @@ export default function DepartmentPage() {
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("gap");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [search, setSearch] = useState("");
+  const [gapFilter, setGapFilter] = useState<"all" | "cheaper" | "pricier">("all");
 
   useEffect(() => {
     fetch(`/api/departments/${slug}`)
@@ -52,15 +44,26 @@ export default function DepartmentPage() {
       .catch((e: Error) => { setError(e.message); setLoading(false); });
   }, [slug]);
 
+  const filtered = useMemo(() => {
+    let result = data;
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(r => r.name.toLowerCase().includes(q));
+    }
+    if (gapFilter === "cheaper") result = result.filter(r => Number(r.gap) > 0);
+    if (gapFilter === "pricier") result = result.filter(r => Number(r.gap) < 0);
+    return result;
+  }, [data, search, gapFilter]);
+
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
-    return [...data].sort((a: any, b: any) => {
+    return [...filtered].sort((a: any, b: any) => {
       const av = a[sortKey] ?? 0;
       const bv = b[sortKey] ?? 0;
       if (typeof av === "string") return dir * av.localeCompare(bv);
       return dir * (Number(av) - Number(bv));
     });
-  }, [data, sortKey, sortDir]);
+  }, [filtered, sortKey, sortDir]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -83,7 +86,6 @@ export default function DepartmentPage() {
 
   const igaCheaper = sorted.filter(r => Number(r.gap) > 0).length;
   const igaPricier = sorted.filter(r => Number(r.gap) < 0).length;
-  const sizeDisputes = sorted.filter(r => r.size_diff !== null && r.size_diff > 0.2).length;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -95,18 +97,37 @@ export default function DepartmentPage() {
           <div>
             <h1 className="text-lg font-bold text-zinc-900 dark:text-white">{deptName} Department</h1>
             <p className="text-xs text-zinc-500">
-              {sorted.length} products · {igaCheaper} IGA cheaper · {igaPricier} IGA pricier
-              {sizeDisputes > 0 && ` · ${sizeDisputes} size mismatches`}
+              {sorted.length} of {data.length} products · {igaCheaper} IGA cheaper · {igaPricier} IGA pricier
             </p>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Search + Filters */}
+        <div className="flex flex-wrap gap-3 mb-4">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="text" placeholder="Search products..."
+              value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-zinc-900 dark:text-zinc-100"
+            />
+          </div>
+          <select
+            value={gapFilter} onChange={e => setGapFilter(e.target.value as any)}
+            className="px-3 py-2 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100"
+          >
+            <option value="all">All gaps</option>
+            <option value="cheaper">IGA cheaper</option>
+            <option value="pricier">IGA pricier</option>
+          </select>
+        </div>
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Product Price Comparison</CardTitle>
-            <p className="text-xs text-zinc-500">Click column headers to sort. Size mismatches flagged in amber.</p>
+            <p className="text-xs text-zinc-500">Click column headers to sort. Showing top 200 by gap.</p>
           </CardHeader>
           <CardContent>
             <Table>
@@ -127,19 +148,16 @@ export default function DepartmentPage() {
                   const gap = Number(row.gap);
                   const igaIsCheaper = gap > 0;
                   const sizeIssue = row.size_diff !== null && row.size_diff > 0.2;
-                  const isMismatch = row.match_quality === "size_mismatch";
 
                   return (
                     <TableRow key={i} className={
-                      isMismatch ? "opacity-40" :
                       sizeIssue ? "bg-amber-50/30 dark:bg-amber-950/10" :
                       igaIsCheaper ? "bg-emerald-50/30 dark:bg-emerald-950/10" :
                       "bg-red-50/30 dark:bg-red-950/10"
                     }>
                       <TableCell className="font-medium text-xs max-w-[250px] truncate" title={row.name}>
                         {row.name}
-                        {isMismatch && <Badge variant="outline" className="ml-2 text-[10px] text-red-500 border-red-300">size</Badge>}
-                        {sizeIssue && !isMismatch && <Badge variant="outline" className="ml-2 text-[10px] text-amber-500 border-amber-300">size?</Badge>}
+                        {sizeIssue && <Badge variant="outline" className="ml-2 text-[10px] text-amber-500 border-amber-300">size?</Badge>}
                       </TableCell>
                       <TableCell className="text-right text-xs font-medium">
                         <span className={igaIsCheaper ? "text-emerald-600" : "text-red-600"}>{row.iga_display}</span>
@@ -161,6 +179,9 @@ export default function DepartmentPage() {
                     </TableRow>
                   );
                 })}
+                {sorted.length === 0 && (
+                  <TableRow><TableCell colSpan={6} className="text-center text-zinc-500 py-8">No products match your filters</TableCell></TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>

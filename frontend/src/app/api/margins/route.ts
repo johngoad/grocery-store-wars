@@ -6,5 +6,5 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get("limit") || "20");
   const direction = (searchParams.get("direction") || "raise") as "raise" | "undercut";
   const results = await getMarginOpportunities(limit, direction);
-  return NextResponse.json(results);
+  return NextResponse.json(results, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
 }

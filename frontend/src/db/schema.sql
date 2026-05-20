@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS products (
     quantity_label TEXT,
     last_updated_at TEXT,
     scraped_at TEXT DEFAULT (datetime('now')),
-    is_iga INTEGER DEFAULT 0
+    is_iga INTEGER DEFAULT 0,
+    size_oz REAL
 );
 CREATE INDEX IF NOT EXISTS idx_products_store ON products(store_id);
 CREATE INDEX IF NOT EXISTS idx_products_upc ON products(upc);
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS product_matches (
     thriftway_product_id TEXT NOT NULL REFERENCES products(id),
     match_type TEXT NOT NULL DEFAULT 'fuzzy_name',
     confidence REAL DEFAULT 0.0,
+    match_quality TEXT DEFAULT 'ok',
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );
