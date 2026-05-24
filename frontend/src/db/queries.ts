@@ -175,3 +175,30 @@ export async function getPriceHistory(productId: string, days = 30) {
   });
   return result.rows;
 }
+
+// --- Scatter Plot Data ---
+export async function getScatterData() {
+  const result = await turso.execute(`
+    SELECT 
+      p.name,
+      p.price as iga_price,
+      pt_comp.price as tw_price,
+      ROUND(ABS(p.price - pt_comp.price), 2) as gap,
+      p.size_oz,
+      pt_comp.size_oz,
+      COALESCE(d.name, 'Other') as department,
+      p.department_id
+    FROM products p
+    JOIN product_matches pm ON p.id = pm.iga_product_id
+    JOIN products pt_comp ON pm.thriftway_product_id = pt_comp.id
+    LEFT JOIN departments d ON p.department_id = d.id
+    WHERE p.store_id = '${IGA_STORE}'
+      AND p.price > 0 AND p.price < 50
+      AND pt_comp.price > 0 AND pt_comp.price < 50
+      AND pm.match_quality != 'size_mismatch'
+      AND ${SIZE_PARITY}
+    ORDER BY ABS(p.price - pt_comp.price) DESC
+    LIMIT 500
+  `);
+  return result.rows;
+}

@@ -9,39 +9,60 @@ import { useData } from "@/hooks/useData";
 
 function fmtSize(s: string | null) {
   if (!s || s === "each" || s === "per lb") return "";
-  return s.length > 12 ? s.substring(0, 12) : s;
+  return s.length > 14 ? s.substring(0, 14) : s;
 }
 
 export function MarginTable() {
   const { data, isLoading } = useData("/api/margins?limit=20&direction=raise");
 
   if (isLoading) {
-    return <Card><CardHeader><CardTitle>Margin Opportunities</CardTitle></CardHeader><CardContent><Skeleton className="h-80 w-full" /></CardContent></Card>;
+    return (
+      <Card><CardHeader><CardTitle>Margin Opportunities</CardTitle></CardHeader>
+        <CardContent><Skeleton className="h-80 w-full" /></CardContent></Card>
+    );
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-amber-200 dark:border-amber-500/10">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-emerald-500" />Margin Opportunities</CardTitle>
-          <Badge variant="outline" className="text-emerald-600 border-emerald-300 dark:border-emerald-700">Raise + still win</Badge>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold">Margin Opportunities</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">IGA is cheaper — room to raise and still beat Thriftway</p>
+            </div>
+          </div>
+          <Badge variant="outline" className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20 text-xs">
+            Raise + still win
+          </Badge>
         </div>
-        <p className="text-sm text-zinc-500">IGA cheaper — raise prices while staying below Thriftway. Sizes verified.</p>
       </CardHeader>
       <CardContent>
         <Table>
-          <TableHeader><TableRow>
-            <TableHead>Product</TableHead><TableHead className="text-right">IGA</TableHead><TableHead className="text-right">TW</TableHead>
-            <TableHead className="text-right w-14">Size</TableHead><TableHead className="text-right">Gap</TableHead>
-          </TableRow></TableHeader>
+          <TableHeader>
+            <TableRow className="border-border hover:bg-transparent">
+              <TableHead className="text-xs text-muted-foreground font-medium">Product</TableHead>
+              <TableHead className="text-right text-xs text-muted-foreground font-medium">IGA</TableHead>
+              <TableHead className="text-right text-xs text-muted-foreground font-medium">TW</TableHead>
+              <TableHead className="text-right text-xs text-muted-foreground font-medium w-16">Size</TableHead>
+              <TableHead className="text-right text-xs text-muted-foreground font-medium">Gap</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {(data || []).map((row: any, i: number) => (
-              <TableRow key={i}>
-                <TableCell className="font-medium max-w-[180px] truncate">{row.name}</TableCell>
-                <TableCell className="text-right text-emerald-600 font-medium text-xs">{row.iga_display}</TableCell>
-                <TableCell className="text-right text-zinc-500 text-xs">{row.tw_display}</TableCell>
-                <TableCell className="text-right text-xs text-zinc-500">{fmtSize(row.iga_size)}{row.iga_size && row.tw_size && " / "}{fmtSize(row.tw_size)}</TableCell>
-                <TableCell className="text-right"><span className="text-emerald-600 font-medium">+${Number(row.gap).toFixed(2)}</span></TableCell>
+              <TableRow key={i} className="border-border hover:bg-amber-50/50 dark:hover:bg-amber-500/5 transition-colors">
+                <TableCell className="font-medium text-sm max-w-[200px] truncate">{row.name}</TableCell>
+                <TableCell className="text-right font-mono-data text-sm text-amber-600 dark:text-amber-400">{row.iga_display}</TableCell>
+                <TableCell className="text-right font-mono-data text-sm text-muted-foreground">{row.tw_display}</TableCell>
+                <TableCell className="text-right text-xs text-muted-foreground">{fmtSize(row.iga_size)}{row.iga_size && row.tw_size && " / "}{fmtSize(row.tw_size)}</TableCell>
+                <TableCell className="text-right">
+                  <Badge className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 font-mono-data text-xs">
+                    +${Number(row.gap).toFixed(2)}
+                  </Badge>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
