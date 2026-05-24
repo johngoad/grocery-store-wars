@@ -7,3 +7,14 @@ __pycache__/
 .next/
 dist/
 *.log
+# Backups (large files)
+backups/
+
+# Python virtual env
+scrapers/.venv/
+
+# Frontend build output
+frontend/.next/
+
+# Vercel
+.vercel/
