@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { getDepartmentComparison } from "@/db/queries";
+import { getCached, setCache, CACHE_5MIN } from "@/lib/cache";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const deptId = searchParams.get("id");
-  const results = await getDepartmentComparison(deptId || undefined);
-  return NextResponse.json(results, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
+export async function GET() {
+  const key = "departments";
+  const cached = getCached(key);
+  if (cached) return NextResponse.json(cached, { headers: CACHE_5MIN });
+
+  const data = await getDepartmentComparison();
+  setCache(key, data, 300);
+  return NextResponse.json(data, { headers: CACHE_5MIN });
 }
